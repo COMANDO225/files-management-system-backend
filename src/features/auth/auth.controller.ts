@@ -17,12 +17,14 @@ export async function signInController(req: Request, res: Response) {
 
 		res.cookie("accessToken", accessToken, {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
+			secure: process.env.NODE_ENV === "production", // Usa true solo en producción
+			sameSite: "strict", // O "lax" si el frontend y backend están en el mismo dominio
 			maxAge: 15 * 60 * 1000, // 15 minutos
 		});
 		res.cookie("refreshToken", refreshToken, {
 			httpOnly: true,
 			secure: process.env.NODE_ENV === "production",
+			sameSite: "strict",
 			maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
 		});
 
