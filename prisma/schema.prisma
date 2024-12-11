@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String  @id @default(uuid())
+  email    String  @unique
+  password String
+  estado   Boolean @default(true)
+  role     String  @default("invitado")
+
+  perfil         Profile?
+  sessiones      Session[]
+  sharedAccesses SharedAccess[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Profile {
+  id          String  @id @default(uuid())
+  userId      String  @unique
+  firstName   String
+  lastName    String
+  address     String?
+  phoneNumber String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  estado    Boolean  @default(true)
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  userAgent String
+  ip        String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Folder {
+  id        String   @id @default(uuid())
+  name      String
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parent         Folder?        @relation("ParentFolder", fields: [parentId], references: [id])
+  subFolders     Folder[]       @relation("ParentFolder")
+  files          File[]
+  sharedAccesses SharedAccess[]
+}
+
+model File {
+  id        String   @id @default(uuid())
+  name      String
+  folderId  String // ID de la carpeta en la que está contenido el archivo
+  fileUrl   String // URL o ID en Google Drive
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  folder         Folder         @relation(fields: [folderId], references: [id])
+  sharedAccesses SharedAccess[]
+}
+
+model SharedAccess {
+  id          String   @id @default(uuid())
+  userId      String
+  folderId    String?
+  fileId      String?
+  accessLevel String   @default("read")
+  createdAt   DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id])
+  folder Folder? @relation(fields: [folderId], references: [id])
+  file   File?   @relation(fields: [fileId], references: [id])
+
+  @@unique([userId, folderId, fileId])
+}
